@@ -1,0 +1,52 @@
+===================================================
+INSTRUCTIONS POUR VIDER LE CACHE DU NAVIGATEUR
+===================================================
+
+Le problème: Votre navigateur garde l'ancienne version en cache.
+
+SOLUTION 1 - Chrome/Edge (RECOMMANDÉ):
+======================================
+1. Appuyez sur F12 (ouvrir DevTools)
+2. Cliquez DROIT sur l'icône de rechargement (à côté de l'adresse)
+3. Sélectionnez "Vider le cache et actualiser de manière forcée"
+
+SOLUTION 2 - Firefox:
+====================
+1. Appuyez sur F12
+2. Cliquez DROIT sur l'icône de rechargement
+3. Sélectionnez "Vider le cache et actualiser"
+
+SOLUTION 3 - Navigation privée (TOUJOURS FONCTIONNE):
+=====================================================
+1. Fermez TOUTES les fenêtres du navigateur
+2. Ouvrez une fenêtre de navigation privée:
+   - Chrome: Ctrl + Shift + N
+   - Firefox: Ctrl + Shift + P
+   - Edge: Ctrl + Shift + N
+3. Allez sur: http://localhost:5000
+4. Sélectionnez un fichier CSV
+
+SOLUTION 4 - Vider tout le cache:
+=================================
+Chrome/Edge:
+1. Ctrl + Shift + Delete
+2. Cochez "Images et fichiers en cache"
+3. Cliquez "Effacer les données"
+4. Rechargez la page
+
+Firefox:
+1. Ctrl + Shift + Delete
+2. Cochez "Cache"
+3. Cliquez "OK"
+4. Rechargez la page
+
+VÉRIFICATION:
+=============
+Dans la console (F12), tapez:
+window.handleFile
+
+Si vous voyez "ƒ (file) { ... }" → OK!
+Si vous voyez "undefined" → Le cache n'est pas vidé
+
+===================================================
+

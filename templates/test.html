@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TEST SIMPLE</title>
+</head>
+<body>
+    <h1>PAGE DE TEST</h1>
+    <p id="result">En attente...</p>
+    
+    <script>
+        console.log('🔴 TEST 1: Script chargé');
+        window.testFunction = function() {
+            return "JE FONCTIONNE";
+        };
+        console.log('🔴 TEST 2: Fonction définie');
+        console.log('🔴 TEST 3: Type =', typeof window.testFunction);
+        document.getElementById('result').textContent = 'Script exécuté avec succès !';
+    </script>
+</body>
+</html>
+

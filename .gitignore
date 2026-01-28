@@ -1,0 +1,10 @@
+# Fichiers pour ignorer les fichiers uploadés et temporaires
+uploads/
+*.csv
+__pycache__/
+*.pyc
+.env
+.DS_Store
+bankia.db
+*.db
+

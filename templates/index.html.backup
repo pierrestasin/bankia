@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankIA - Matching relevés bancaires avec Dolibarr</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f0f0;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8e8f0;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .transaction-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s;
+        }
+        
+        .transaction-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .transaction-amount {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .amount-positive {
+            color: #28a745;
+        }
+        
+        .amount-negative {
+            color: #dc3545;
+        }
+        
+        .match-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .match-high {
+            background: #28a745;
+            color: white;
+        }
+        
+        .match-medium {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .match-low {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .match-none {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .match-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .match-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .match-reasons {
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .match-reasons span {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 3px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        
+        .actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="background: linear-gradient(135deg, #1a5490 0%, #2ecc71 100%);">
+            <h1>🏦 BankIA v2.1 FIXED 🚀</h1>
+            <p style="font-size: 18px; font-weight: bold; color: #ffeb3b;">✅ VERSION CORRIGEE - TEST UPLOAD</p>
+            <p>Matching automatique des relevés bancaires avec Dolibarr</p>
+        </div>
+        
+        <div class="content">
+            <!-- Section Upload -->
+            <div class="section">
+                <h2>1. Upload du relevé bancaire (CSV)</h2>
+                <div class="upload-area" id="uploadArea">
+                    <p style="font-size: 1.2em; margin-bottom: 20px;">📤 Glissez-déposez votre fichier CSV ici</p>
+                    <p style="color: #6c757d; margin-bottom: 20px;">ou</p>
+                    <label for="fileInput" class="btn" id="fileLabel" style="cursor: pointer;">
+                        📁 Sélectionner un fichier CSV
+                    </label>
+                    <input type="file" id="fileInput" accept=".csv" style="display: none;" onchange="console.log('>>> ONCHANGE!', this.files); console.log('>>> Type handleFile:', typeof window.handleFile); if(this.files && this.files.length > 0) { window.handleFile(this.files[0]); }">
+                    <p id="fileName" style="margin-top: 15px; color: #6c757d;"></p>
+                    <p style="margin-top: 10px; color: #999; font-size: 0.9em;">Debug: <span id="debugInfo">En attente de fichier...</span></p>
+                </div>
+                <div id="uploadStatus" class="status"></div>
+            </div>
+            
+            <!-- Section Configuration -->
+            <div class="section" id="configSection" style="display: none;">
+                <h2>2. Configuration</h2>
+                <div class="form-group">
+                    <label for="accountSelect">Compte bancaire Dolibarr:</label>
+                    <select id="accountSelect">
+                        <option value="">Chargement...</option>
+                    </select>
+                </div>
+                <button class="btn" id="matchBtn" onclick="performMatching()">
+                    🔍 Effectuer le matching
+                </button>
+                <div id="matchingStatus" class="status"></div>
+            </div>
+            
+            <!-- Section Résultats -->
+            <div class="section" id="resultsSection" style="display: none;">
+                <h2>3. Résultats du matching</h2>
+                
+                <!-- Filtres et recherche -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px; font-size: 1.2em;">🔍 Filtres et recherche</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>Recherche dans libellés:</label>
+                            <input type="text" id="searchInput" placeholder="Rechercher..." onkeyup="filterResults()" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>Filtrer par score:</label>
+                            <select id="scoreFilter" onchange="filterResults()" style="width: 100%;">
+                                <option value="">Tous les scores</option>
+                                <option value="80">Excellent (≥80%)</option>
+                                <option value="50">Bon (≥50%)</option>
+                                <option value="0">Tous</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filtrer par montant:</label>
+                            <select id="amountFilter" onchange="filterResults()" style="width: 100%;">
+                                <option value="">Tous les montants</option>
+                                <option value="positive">Crédits uniquement</option>
+                                <option value="negative">Débits uniquement</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filtrer par statut:</label>
+                            <select id="statusFilter" onchange="filterResults()" style="width: 100%;">
+                                <option value="">Tous</option>
+                                <option value="matched">Avec match</option>
+                                <option value="no_match">Sans match</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <button class="btn btn-secondary" onclick="resetFilters()" style="padding: 8px 15px;">
+                                🔄 Réinitialiser les filtres
+                            </button>
+                        </div>
+                        <div style="color: #6c757d;">
+                            <span id="filteredCount">0</span> transaction(s) affichée(s)
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="resultsContainer"></div>
+            </div>
+            
+            <!-- Section Historique -->
+            <div class="section" id="historySection">
+                <h2>📊 Historique des paiements</h2>
+                <div style="margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="loadHistory()">
+                        🔄 Actualiser l'historique
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadStatistics()" style="margin-left: 10px;">
+                        📈 Statistiques
+                    </button>
+                </div>
+                <div id="statisticsContainer" style="display: none;"></div>
+                <div id="historyContainer">
+                    <p style="color: #6c757d;">Cliquez sur "Actualiser l'historique" pour voir les paiements créés</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ========================================
+        // VERSION 2.0 - ANTI-CACHE
+        // ========================================
+        console.log('>>> DEBUT SCRIPT VERSION 2.0');
+        console.log('>>> Timestamp:', new Date().toISOString());
+        
+        let uploadedTransactions = [];
+        let matchedResults = [];
+        let filteredResults = [];
+        
+        // Variables pour le tri
+        let sortColumn = null;
+        let sortDirection = 'asc';
+        
+        // DEFINITION IMMEDIATE DE handleFile
+        console.log('>>> Definition de handleFile...');
+        
+        function handleFile(file) {
+            console.log('>>> handleFile appele avec:', file);
+            
+            if (!file) {
+                console.error('Aucun fichier fourni');
+                const uploadStatus = document.getElementById('uploadStatus');
+                if (uploadStatus) {
+                    uploadStatus.textContent = 'Aucun fichier sélectionné';
+                    uploadStatus.className = 'status error';
+                    uploadStatus.style.display = 'block';
+                }
+                return;
+            }
+            
+            console.log('Nom du fichier:', file.name);
+            
+            if (!file.name || !file.name.toLowerCase().endsWith('.csv')) {
+                console.error('Fichier non CSV:', file.name);
+                const uploadStatus = document.getElementById('uploadStatus');
+                if (uploadStatus) {
+                    uploadStatus.textContent = 'Veuillez sélectionner un fichier CSV';
+                    uploadStatus.className = 'status error';
+                    uploadStatus.style.display = 'block';
+                }
+                return;
+            }
+            
+            const fileNameElement = document.getElementById('fileName');
+            if (fileNameElement) {
+                fileNameElement.textContent = `Fichier sélectionné: ${file.name}`;
+            }
+            
+            const debugInfo = document.getElementById('debugInfo');
+            if (debugInfo) {
+                debugInfo.textContent = 'Upload en cours...';
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            console.log('Envoi de la requête...');
+            const uploadStatus = document.getElementById('uploadStatus');
+            if (uploadStatus) {
+                uploadStatus.textContent = 'Upload en cours...';
+                uploadStatus.className = 'status info';
+                uploadStatus.style.display = 'block';
+            }
+            
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        console.error('Erreur HTTP:', err);
+                        return Promise.reject(err);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Données reçues:', data);
+                if (data.success) {
+                    uploadedTransactions = data.transactions;
+                    if (uploadStatus) {
+                        uploadStatus.textContent = `✅ ${data.transactions_count} transactions chargées avec succès`;
+                        uploadStatus.className = 'status success';
+                        uploadStatus.style.display = 'block';
+                    }
+                    if (debugInfo) {
+                        debugInfo.textContent = `${data.transactions_count} transactions chargées`;
+                    }
+                    const configSection = document.getElementById('configSection');
+                    if (configSection) {
+                        configSection.style.display = 'block';
+                    }
+                    loadBankAccounts();
+                } else {
+                    console.error('Erreur dans la réponse:', data.error);
+                    if (uploadStatus) {
+                        uploadStatus.textContent = `Erreur: ${data.error || 'Erreur inconnue'}`;
+                        uploadStatus.className = 'status error';
+                        uploadStatus.style.display = 'block';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erreur upload complète:', error);
+                if (uploadStatus) {
+                    uploadStatus.textContent = `Erreur: ${error.error || error.message || 'Erreur lors de l\'upload'}`;
+                    uploadStatus.className = 'status error';
+                    uploadStatus.style.display = 'block';
+                }
+            });
+        }
+        
+        // Exposer globalement
+        window.handleFile = handleFile;
+        console.log('>>> handleFile defini. Type:', typeof window.handleFile);
+        
+        // Initialiser les gestionnaires d'événements après le chargement du DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('>>> DOM charge, initialisation...');
+            
+            // Gestion du drag & drop
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!uploadArea) {
+                console.error('Élément uploadArea non trouvé');
+            }
+            if (!fileInput) {
+                console.error('Élément fileInput non trouvé');
+            }
+            
+            if (!uploadArea || !fileInput) {
+                console.error('Impossible d\'initialiser les gestionnaires d\'upload');
+                return;
+            }
+            
+            console.log('Éléments trouvés, ajout des listeners...');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                console.log('Fichier déposé:', files.length);
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+            
+            // Gestionnaire principal avec addEventListener
+            fileInput.addEventListener('change', function(e) {
+                console.log('=== ÉVÉNEMENT CHANGE DÉCLENCHÉ (addEventListener) ===');
+                document.getElementById('debugInfo').textContent = 'Événement change détecté!';
+                console.log('Fichiers:', e.target.files);
+                console.log('Nombre de fichiers:', e.target.files ? e.target.files.length : 0);
+                
+                if (e.target.files && e.target.files.length > 0) {
+                    console.log('Fichier sélectionné:', e.target.files[0].name);
+                    document.getElementById('debugInfo').textContent = 'Fichier: ' + e.target.files[0].name;
+                    handleFile(e.target.files[0]);
+                } else {
+                    console.log('Aucun fichier sélectionné');
+                    document.getElementById('debugInfo').textContent = 'Aucun fichier';
+                }
+            });
+            
+            // Alternative: polling toutes les 500ms pour détecter un changement
+            let lastFileCount = 0;
+            setInterval(function() {
+                if (fileInput.files && fileInput.files.length > 0 && fileInput.files.length !== lastFileCount) {
+                    console.log('Fichier détecté via polling:', fileInput.files[0].name);
+                    document.getElementById('debugInfo').textContent = 'Détecté: ' + fileInput.files[0].name;
+                    lastFileCount = fileInput.files.length;
+                    handleFile(fileInput.files[0]);
+                }
+            }, 500);
+            
+            // Bouton de test manuel
+            const testButton = document.createElement('button');
+            testButton.textContent = '🔍 Test manuel - vérifier fichier';
+            testButton.className = 'btn btn-secondary';
+            testButton.style.marginTop = '10px';
+            testButton.onclick = function() {
+                console.log('Test manuel - fileInput.files:', fileInput.files);
+                if (fileInput.files && fileInput.files.length > 0) {
+                    alert('Fichier détecté: ' + fileInput.files[0].name);
+                    handleFile(fileInput.files[0]);
+                } else {
+                    alert('Aucun fichier détecté. Sélectionnez un fichier d\'abord.');
+                }
+            };
+            uploadArea.appendChild(testButton);
+            
+            // Vérifier que l'input est bien accessible
+            console.log('fileInput type:', fileInput.type);
+            console.log('fileInput accept:', fileInput.accept);
+            console.log('fileInput id:', fileInput.id);
+            
+            console.log('Gestionnaires d\'événements initialisés');
+        });
+        
+        // Fonction globale pour le débogage
+        window.testUpload = function() {
+            console.log('Test upload - uploadedTransactions:', uploadedTransactions);
+            console.log('Test upload - fileInput:', document.getElementById('fileInput'));
+        };
+        
+        function loadBankAccounts() {
+            fetch('/api/dolibarr/accounts')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = document.getElementById('accountSelect');
+                        select.innerHTML = '<option value="">Sélectionner un compte</option>';
+                        data.accounts.forEach(account => {
+                            const option = document.createElement('option');
+                            option.value = account.id;
+                            option.textContent = `${account.label} (${account.account_number || 'N/A'})`;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des comptes:', error);
+                });
+        }
+        
+        function performMatching() {
+            const accountId = document.getElementById('accountSelect').value;
+            
+            if (!accountId) {
+                showStatus('matchingStatus', 'Veuillez sélectionner un compte bancaire', 'error');
+                return;
+            }
+            
+            showStatus('matchingStatus', 'Matching en cours...', 'info');
+            document.getElementById('matchBtn').disabled = true;
+            
+            fetch('/api/match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    transactions: uploadedTransactions,
+                    account_id: accountId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    matchedResults = data.matched_transactions;
+                    filteredResults = [...matchedResults]; // Copie pour les filtres
+                    displayResults(filteredResults);
+                    updateFilteredCount();
+                    showStatus('matchingStatus', 
+                        `✅ Matching terminé pour ${matchedResults.length} transactions`, 
+                        'success');
+                    document.getElementById('resultsSection').style.display = 'block';
+                } else {
+                    showStatus('matchingStatus', `Erreur: ${data.error}`, 'error');
+                }
+                document.getElementById('matchBtn').disabled = false;
+            })
+            .catch(error => {
+                showStatus('matchingStatus', `Erreur: ${error.message}`, 'error');
+                document.getElementById('matchBtn').disabled = false;
+            });
+        }
+        
+        function filterResults() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const scoreFilter = document.getElementById('scoreFilter').value;
+            const amountFilter = document.getElementById('amountFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            filteredResults = matchedResults.filter(result => {
+                const transaction = result.transaction;
+                const matchScore = result.match_score || 0;
+                const hasMatch = result.best_match !== null;
+                
+                // Filtre recherche
+                if (searchTerm && !transaction.label.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+                
+                // Filtre score
+                if (scoreFilter && matchScore < parseInt(scoreFilter)) {
+                    return false;
+                }
+                
+                // Filtre montant
+                if (amountFilter === 'positive' && transaction.amount < 0) {
+                    return false;
+                }
+                if (amountFilter === 'negative' && transaction.amount >= 0) {
+                    return false;
+                }
+                
+                // Filtre statut
+                if (statusFilter === 'matched' && !hasMatch) {
+                    return false;
+                }
+                if (statusFilter === 'no_match' && hasMatch) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            displayResults(filteredResults);
+            updateFilteredCount();
+        }
+        
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('scoreFilter').value = '';
+            document.getElementById('amountFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            filteredResults = [...matchedResults];
+            displayResults(filteredResults);
+            updateFilteredCount();
+        }
+        
+        function updateFilteredCount() {
+            const count = filteredResults.length;
+            const total = matchedResults.length;
+            document.getElementById('filteredCount').textContent = 
+                `${count} / ${total}`;
+        }
+        
+        function sortResults(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredResults.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch(column) {
+                    case 'date':
+                        aVal = a.transaction.date;
+                        bVal = b.transaction.date;
+                        break;
+                    case 'amount':
+                        aVal = Math.abs(a.transaction.amount);
+                        bVal = Math.abs(b.transaction.amount);
+                        break;
+                    case 'score':
+                        aVal = a.match_score || 0;
+                        bVal = b.match_score || 0;
+                        break;
+                    case 'label':
+                        aVal = (a.transaction.label || '').toLowerCase();
+                        bVal = (b.transaction.label || '').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            displayResults(filteredResults);
+        }
+        
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            
+            results.forEach((result, index) => {
+                const transaction = result.transaction;
+                const bestMatch = result.best_match;
+                const matchScore = result.match_score || 0;
+                
+                const card = document.createElement('div');
+                card.className = 'transaction-card';
+                
+                const amountClass = transaction.amount >= 0 ? 'amount-positive' : 'amount-negative';
+                const matchClass = matchScore >= 80 ? 'match-high' : 
+                                 matchScore >= 50 ? 'match-medium' : 
+                                 matchScore > 0 ? 'match-low' : 'match-none';
+                const matchLabel = matchScore >= 80 ? 'Excellent' : 
+                                 matchScore >= 50 ? 'Bon' : 
+                                 matchScore > 0 ? 'Faible' : 'Aucun';
+                
+                card.innerHTML = `
+                    <div class="transaction-header">
+                        <div>
+                            <strong>${transaction.label || 'Sans libellé'}</strong>
+                            <span class="match-badge ${matchClass}">${matchLabel} (${matchScore}%)</span>
+                        </div>
+                        <div class="transaction-amount ${amountClass}">
+                            ${transaction.amount >= 0 ? '+' : ''}${transaction.amount.toFixed(2)} €
+                        </div>
+                    </div>
+                    <div style="color: #6c757d; margin-bottom: 15px;">
+                        📅 ${new Date(transaction.date * 1000).toLocaleDateString('fr-FR')}
+                        ${transaction.invoice_ref ? ` | 📄 Ref: ${transaction.invoice_ref}` : ''}
+                    </div>
+                    ${bestMatch ? `
+                        <div class="match-details">
+                            <h4>Meilleur match: ${bestMatch.type === 'invoice' ? 'Facture' : 'Ligne bancaire'}</h4>
+                            ${bestMatch.type === 'invoice' ? `
+                                <div class="match-item">
+                                    <strong>Facture ${bestMatch.data.ref || bestMatch.data.id}</strong><br>
+                                    Tiers: ${bestMatch.data.thirdparty?.name || 'N/A'}<br>
+                                    Montant: ${bestMatch.data.total_ttc} € | Reste à payer: ${bestMatch.data.remaintopay} €<br>
+                                    <div class="match-reasons">
+                                        ${bestMatch.reasons.map(r => `<span>${r}</span>`).join('')}
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <button class="btn" onclick="createPayment(${index})" id="paymentBtn${index}">
+                                            💳 Créer le paiement
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="createPaymentAndBankLine(${index})" id="paymentBankBtn${index}" style="margin-left: 10px;">
+                                            💳➕ Créer paiement + ligne bancaire
+                                        </button>
+                                    </div>
+                                ` : `
+                                <div class="match-item">
+                                    <strong>Ligne bancaire existante</strong><br>
+                                    Libellé: ${bestMatch.data.label || 'N/A'}<br>
+                                    Montant: ${bestMatch.data.amount} €<br>
+                                    <div class="match-reasons">
+                                        ${bestMatch.reasons.map(r => `<span>${r}</span>`).join('')}
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    ` : `
+                        <div class="match-details">
+                            <p style="color: #6c757d;">Aucun match trouvé. Suggestions:</p>
+                            ${result.invoice_matches.length > 0 ? `
+                                <h5>Factures possibles:</h5>
+                                ${result.invoice_matches.slice(0, 3).map(match => `
+                                    <div class="match-item">
+                                        Facture ${match.invoice.ref} - ${match.invoice.thirdparty?.name || 'N/A'} 
+                                        (Score: ${match.score}%)<br>
+                                        <div class="match-reasons">
+                                            ${match.reasons.map(r => `<span>${r}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            ` : ''}
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-secondary" onclick="createBankLine(${index})">
+                                    ➕ Créer une ligne bancaire
+                                </button>
+                            </div>
+                        </div>
+                    `}
+                `;
+                
+                // Ajouter les attributs data pour le tri et filtrage
+                card.setAttribute('data-index', index);
+                card.setAttribute('data-date', transaction.date);
+                card.setAttribute('data-amount', transaction.amount);
+                card.setAttribute('data-score', matchScore);
+                card.setAttribute('data-label', (transaction.label || '').toLowerCase());
+                card.setAttribute('data-has-match', bestMatch ? 'true' : 'false');
+                
+                container.appendChild(card);
+            });
+            
+            // Mettre à jour le compteur
+            updateFilteredCount();
+        }
+        
+        function createPaymentAndBankLine(index) {
+            const result = matchedResults[index];
+            const bestMatch = result.best_match;
+            const transaction = result.transaction;
+            
+            if (!bestMatch || bestMatch.type !== 'invoice') {
+                alert('Impossible de créer un paiement pour cette transaction');
+                return;
+            }
+            
+            const accountId = document.getElementById('accountSelect').value;
+            if (!accountId) {
+                alert('Veuillez sélectionner un compte bancaire');
+                return;
+            }
+            
+            // Vérifier le montant
+            const invoiceAmount = parseFloat(bestMatch.data.remaintopay || bestMatch.data.total_ttc);
+            const transactionAmount = Math.abs(transaction.amount);
+            const amountDiff = Math.abs(transactionAmount - invoiceAmount);
+            
+            let confirmMessage = `Créer le paiement ET la ligne bancaire pour la facture ${bestMatch.data.ref || bestMatch.data.id} ?\n\n`;
+            confirmMessage += `Montant transaction: ${transactionAmount.toFixed(2)} €\n`;
+            confirmMessage += `Reste à payer: ${invoiceAmount.toFixed(2)} €\n`;
+            if (amountDiff > 0.01) {
+                confirmMessage += `⚠️ ATTENTION: Différence de ${amountDiff.toFixed(2)} €\n`;
+            }
+            confirmMessage += `\nTiers: ${bestMatch.data.thirdparty?.name || 'N/A'}`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            const paymentData = {
+                invoice_id: bestMatch.data.id,
+                datepaye: transaction.date,
+                paymentid: 2, // Virement par défaut
+                accountid: parseInt(accountId),
+                closepaidinvoices: 'yes',
+                num_payment: '',
+                comment: `Paiement automatique depuis relevé bancaire - ${transaction.label}`,
+                amount: transactionAmount,
+                label: transaction.label,
+                bank_line_type: 'VIR'
+            };
+            
+            // Afficher un loader
+            const btn = document.getElementById(`paymentBankBtn${index}`);
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ Création en cours...';
+            
+            fetch('/api/dolibarr/create-payment-and-bank-line', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paymentData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let message = `✅ Paiement créé avec succès !\n\nID du paiement: ${data.payment_id}\n`;
+                    if (data.bank_line_created) {
+                        message += `ID ligne bancaire: ${data.bank_line_id}\n`;
+                    }
+                    message += `${data.invoice?.paye ? 'Facture marquée comme payée' : 'Facture partiellement payée'}`;
+                    alert(message);
+                    // Recharger les résultats pour mettre à jour les statuts
+                    performMatching();
+                    // Recharger l'historique
+                    loadHistory();
+                    loadStatistics();
+                } else {
+                    alert(`❌ Erreur lors de la création: ${data.error}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                alert(`❌ Erreur: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+        
+        function createPayment(index) {
+            const result = matchedResults[index];
+            const bestMatch = result.best_match;
+            const transaction = result.transaction;
+            
+            if (!bestMatch || bestMatch.type !== 'invoice') {
+                alert('Impossible de créer un paiement pour cette transaction');
+                return;
+            }
+            
+            const accountId = document.getElementById('accountSelect').value;
+            if (!accountId) {
+                alert('Veuillez sélectionner un compte bancaire');
+                return;
+            }
+            
+            // Vérifier le montant
+            const invoiceAmount = parseFloat(bestMatch.data.remaintopay || bestMatch.data.total_ttc);
+            const transactionAmount = Math.abs(transaction.amount);
+            const amountDiff = Math.abs(transactionAmount - invoiceAmount);
+            
+            let confirmMessage = `Créer un paiement pour la facture ${bestMatch.data.ref || bestMatch.data.id} ?\n\n`;
+            confirmMessage += `Montant transaction: ${transactionAmount.toFixed(2)} €\n`;
+            confirmMessage += `Reste à payer: ${invoiceAmount.toFixed(2)} €\n`;
+            if (amountDiff > 0.01) {
+                confirmMessage += `⚠️ ATTENTION: Différence de ${amountDiff.toFixed(2)} €\n`;
+            }
+            confirmMessage += `\nTiers: ${bestMatch.data.thirdparty?.name || 'N/A'}`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Mode de paiement par défaut (Virement)
+            const paymentData = {
+                invoice_id: bestMatch.data.id,
+                datepaye: transaction.date,
+                paymentid: 2, // Virement par défaut
+                accountid: parseInt(accountId),
+                closepaidinvoices: 'yes',
+                num_payment: '',
+                comment: `Paiement automatique depuis relevé bancaire - ${transaction.label}`,
+                amount: transactionAmount
+            };
+            
+            // Afficher un loader
+            const btn = document.getElementById(`paymentBtn${index}`);
+            if (!btn) {
+                // Fallback si le bouton n'est pas trouvé
+                const buttons = document.querySelectorAll('.btn');
+                btn = buttons[buttons.length - 1];
+            }
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ Création en cours...';
+            
+            fetch('/api/dolibarr/create-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paymentData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ Paiement créé avec succès !\n\nID du paiement: ${data.payment_id}\n${data.invoice?.paye ? 'Facture marquée comme payée' : 'Facture partiellement payée'}`);
+                    // Recharger les résultats pour mettre à jour les statuts
+                    performMatching();
+                    // Recharger l'historique
+                    loadHistory();
+                    loadStatistics();
+                } else {
+                    alert(`❌ Erreur lors de la création du paiement: ${data.error}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                alert(`❌ Erreur: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+        
+        function createBankLine(index) {
+            const result = matchedResults[index];
+            const transaction = result.transaction;
+            
+            const accountId = document.getElementById('accountSelect').value;
+            if (!accountId) {
+                alert('Veuillez sélectionner un compte bancaire');
+                return;
+            }
+            
+            if (!confirm(`Créer une ligne bancaire pour cette transaction ?\n\nMontant: ${transaction.amount} €`)) {
+                return;
+            }
+            
+            const lineData = {
+                account_id: parseInt(accountId),
+                date: transaction.date,
+                type: 'VIR', // Type par défaut
+                label: transaction.label,
+                amount: transaction.amount,
+                num_releve: ''
+            };
+            
+            fetch('/api/dolibarr/create-bank-line', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(lineData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ Ligne bancaire créée avec succès !\nID: ${data.line_id}`);
+                } else {
+                    alert(`❌ Erreur: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                alert(`❌ Erreur: ${error.message}`);
+            });
+        }
+        
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+            element.style.display = 'block';
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        function loadHistory() {
+            fetch('/api/history/payments?limit=50')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayHistory(data.payments);
+                    } else {
+                        showStatus('historyContainer', `Erreur: ${data.error}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    showStatus('historyContainer', `Erreur: ${error.message}`, 'error');
+                });
+        }
+        
+        function displayHistory(payments) {
+            const container = document.getElementById('historyContainer');
+            
+            if (payments.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d;">Aucun paiement dans l\'historique</p>';
+                return;
+            }
+            
+            let html = '<table><thead><tr>';
+            html += '<th>Date</th><th>Facture</th><th>Tiers</th><th>Montant</th><th>Compte</th><th>Statut</th><th>Actions</th>';
+            html += '</tr></thead><tbody>';
+            
+            payments.forEach(payment => {
+                const date = new Date(payment.created_at).toLocaleDateString('fr-FR');
+                const statusClass = payment.status === 'cancelled' ? 'match-low' : 'match-high';
+                const statusLabel = payment.status === 'cancelled' ? 'Annulé' : 'Créé';
+                
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${payment.invoice_ref || payment.invoice_id}</td>
+                    <td>${payment.thirdparty_name || 'N/A'}</td>
+                    <td>${payment.amount.toFixed(2)} €</td>
+                    <td>${payment.account_label || 'N/A'}</td>
+                    <td><span class="match-badge ${statusClass}">${statusLabel}</span></td>
+                    <td>
+                        ${payment.status !== 'cancelled' ? 
+                            `<button class="btn btn-secondary" onclick="cancelPayment(${payment.id})" style="padding: 5px 10px; font-size: 0.9em;">Annuler</button>` : 
+                            '<span style="color: #6c757d;">-</span>'
+                        }
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function loadStatistics() {
+            fetch('/api/history/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayStatistics(data.statistics);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des statistiques:', error);
+                });
+        }
+        
+        function displayStatistics(stats) {
+            const container = document.getElementById('statisticsContainer');
+            container.style.display = 'block';
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong>Total créés</strong><br>
+                        <span style="font-size: 1.5em; color: #667eea;">${stats.total_created}</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <strong>Montant total</strong><br>
+                        <span style="font-size: 1.5em; color: #28a745;">${stats.total_amount.toFixed(2)} €</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <strong>Aujourd'hui</strong><br>
+                        <span style="font-size: 1.5em; color: #ffc107;">${stats.today_count}</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                        <strong>Annulés</strong><br>
+                        <span style="font-size: 1.5em; color: #dc3545;">${stats.total_cancelled}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function cancelPayment(recordId) {
+            if (!confirm('Êtes-vous sûr de vouloir annuler ce paiement dans l\'historique ?\n\nNote: Cela ne supprime pas le paiement dans Dolibarr.')) {
+                return;
+            }
+            
+            const reason = prompt('Raison de l\'annulation (optionnel):') || 'Annulation manuelle';
+            
+            fetch(`/api/history/payments/${recordId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason: reason })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Paiement marqué comme annulé');
+                    loadHistory();
+                    loadStatistics();
+                } else {
+                    alert(`❌ Erreur: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                alert(`❌ Erreur: ${error.message}`);
+            });
+        }
+        
+        // Charger l'historique au chargement de la page
+        window.addEventListener('load', function() {
+            loadHistory();
+            loadStatistics();
+        });
+
