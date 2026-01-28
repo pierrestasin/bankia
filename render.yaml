@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: bankia
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: DOLIBARR_URL
+        sync: false
+      - key: DOLIBARR_BASE_URL
+        sync: false
+      - key: DOLIBARR_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
